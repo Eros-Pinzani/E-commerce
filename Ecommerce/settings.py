@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'Category',
+    'Accounts',
 ]
 
 MIDDLEWARE = [
@@ -68,6 +69,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Ecommerce.wsgi.application'
+
+AUTH_USER_MODEL = 'Accounts.Account'
 
 
 # Database
@@ -120,6 +123,10 @@ STATIC_ROOT = BASE_DIR / 'static'
 STATICFILES_DIRS = [
     'Ecommerce/static',
 ]
+
+# media files configuration
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
