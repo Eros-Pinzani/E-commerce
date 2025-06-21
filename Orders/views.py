@@ -66,6 +66,7 @@ def place_order(request, total=0, quantity=0):
             data.tax = tax
             data.ip = request.META.get('REMOTE_ADDR')
             data.is_ordered = True  # Imposta l'ordine come completato
+            data.status = 'Completed'  # Imposta lo stato a Completed
             data.save()
             # Genera il numero ordine
             yr = int(datetime.date.today().strftime('%Y'))
