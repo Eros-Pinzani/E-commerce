@@ -24,14 +24,14 @@ def add_cart(request, product_id):
         product_variation = []
         if request.method == 'POST':
             for item in request.POST:
-                key = item
-                value = request.POST[key]
-                try:
-                    variation = Variation.objects.get(product=product, variation_category__iexact=key,
-                                                      variation_value__iexact=value)
-                    product_variation.append(variation)
-                except:
-                    pass
+                if item.startswith('variation_'):
+                    try:
+                        vtype_id = int(item.replace('variation_', ''))
+                        value = request.POST[item]
+                        variation = Variation.objects.get(product=product, variation_category_id=vtype_id, variation_value__iexact=value)
+                        product_variation.append(variation)
+                    except:
+                        pass
 
         is_cart_item_exists = CartItem.objects.filter(product=product, user=current_user).exists()
         if is_cart_item_exists:
@@ -70,14 +70,14 @@ def add_cart(request, product_id):
         product_variation = []
         if request.method == 'POST':
             for item in request.POST:
-                key = item
-                value = request.POST[key]
-                try:
-                    variation = Variation.objects.get(product=product, variation_category__iexact=key,
-                                                      variation_value__iexact=value)
-                    product_variation.append(variation)
-                except:
-                    pass
+                if item.startswith('variation_'):
+                    try:
+                        vtype_id = int(item.replace('variation_', ''))
+                        value = request.POST[item]
+                        variation = Variation.objects.get(product=product, variation_category_id=vtype_id, variation_value__iexact=value)
+                        product_variation.append(variation)
+                    except:
+                        pass
 
         try:
             cart = Cart.objects.get(cart_id=_cart_id(request))  # get the cart using the cart_id present in the session
