@@ -1,22 +1,24 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 
 from Carts.models import Cart, CartItem
+from Category.models import Category
 from Orders.models import Order, OrderProduct
-from .forms import RegistrationForm, UserForm, UserProfileForm
+from .forms import RegistrationForm, UserForm, UserProfileForm, CategoryForm, ProductForm, VariationForm, StockUpdateForm, AddVariationTypesForm, RemoveVariationTypeForm
+from Store.models import Product, Variation, VariationType
+from django.utils.text import slugify
 from .models import Account, UserProfile
 from django.contrib import messages, auth
-
-# Verification email
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
-
 from Carts.views import _cart_id
 import requests
+from django.db import IntegrityError
 
 
 # Create your views here.
@@ -39,6 +41,7 @@ def register(request):
                                                password=password
                                                )
             user.phone_number = phone_number
+            user.is_manager = form.cleaned_data.get('is_manager', False)
             user.save()
 
             # Create UserProfile
@@ -59,7 +62,7 @@ def register(request):
             to_email = email
             send_email = EmailMessage(mail_subject, message, to=[to_email])
             send_email.send()
-            #messages.success(request, 'Thank you for registering with us. A verification email has been sent to your email address. Please verify your account.')
+            messages.success(request, 'Thank you for registering with us. A verification email has been sent to your email address. Please verify your account.')
             return redirect('/accounts/login/?command=verification&email='+ email)
         else:
             if 'email' in form.errors:
@@ -281,3 +284,175 @@ def order_detail(request, order_id):
         'subtotal': subtotal,
     }
     return render(request, 'accounts/order_detail.html', context)
+
+@login_required(login_url='login')
+def manager_dashboard(request):
+    if not request.user.is_authenticated or not request.user.is_manager:
+        return redirect('dashboard')
+    return render(request, 'accounts/manager_dashboard.html')
+
+@login_required(login_url='login')
+def manager_categories(request):
+    if not request.user.is_authenticated or not request.user.is_manager:
+        return redirect('dashboard')
+    categories = Category.objects.all().order_by('category_name')
+    if request.method == 'POST':
+        if 'add_category' in request.POST:
+            form = CategoryForm(request.POST)
+            if form.is_valid():
+                category = form.save(commit=False)
+                category.slug = slugify(category.category_name)
+                category.save()
+                messages.success(request, 'Category added successfully.')
+                return redirect('manager_categories')
+        elif 'delete_category' in request.POST:
+            category_id = request.POST.get('category_id')
+            category = Category.objects.get(id=category_id)
+            category.delete()
+            messages.success(request, 'Category and all related products have been deleted.')
+            return redirect('manager_categories')
+    else:
+        form = CategoryForm()
+    context = {
+        'categories': categories,
+        'form': form,
+    }
+    return render(request, 'accounts/manager_categories.html', context)
+
+@login_required(login_url='login')
+def manager_products(request):
+    if not request.user.is_authenticated or not request.user.is_manager:
+        return redirect('dashboard')
+    products = Product.objects.all().order_by('product_name')
+    if request.method == 'POST':
+        if 'add_product' in request.POST:
+            form = ProductForm(request.POST, request.FILES)
+            variation_type_names_raw = request.POST.get('variation_type_names', '')
+            variation_type_names = variation_type_names_raw.splitlines()
+            if form.is_valid():
+                product = form.save(commit=False)
+                base_slug = slugify(product.product_name)
+                counter = 0
+                while True:
+                    slug = base_slug if counter == 0 else f"{base_slug}-{counter}"
+                    product.slug = slug
+                    try:
+                        product.save()
+                        break
+                    except IntegrityError:
+                        counter += 1
+                for vt_name in variation_type_names:
+                    if vt_name.strip():
+                        VariationType.objects.create(product=product, name=vt_name.strip())
+                messages.success(request, 'Product and variation types added successfully.')
+                return redirect('manager_products')
+        elif 'delete_product' in request.POST:
+            form = ProductForm()
+            product_id = request.POST.get('product_id')
+            product = Product.objects.get(id=product_id)
+            product.delete()
+            messages.success(request, 'Product deleted successfully.')
+            return redirect('manager_products')
+        else:
+            form = ProductForm()
+    else:
+        form = ProductForm()
+    context = {
+        'products': products,
+        'form': form,
+    }
+    return render(request, 'accounts/manager_products.html', context)
+
+@login_required(login_url='login')
+def manager_variations(request):
+    if not request.user.is_authenticated or not request.user.is_manager:
+        return redirect('dashboard')
+    variations = Variation.objects.select_related('product', 'variation_category').all().order_by('product__product_name')
+    if request.method == 'POST':
+        product_id = request.POST.get('product')
+        form = VariationForm(request.POST, product_id=product_id)
+        if 'add_variation' in request.POST and form.is_valid():
+            form.save()
+            messages.success(request, 'Variation added successfully.')
+            return redirect('manager_variations')
+        elif 'delete_variation' in request.POST:
+            variation_id = request.POST.get('variation_id')
+            variation = Variation.objects.get(id=variation_id)
+            variation.delete()
+            messages.success(request, 'Variation deleted successfully.')
+            return redirect('manager_variations')
+    else:
+        form = VariationForm()
+    context = {
+        'variations': variations,
+        'form': form,
+    }
+    return render(request, 'accounts/manager_variations.html', context)
+
+@login_required(login_url='login')
+def manager_stock(request):
+    if not request.user.is_authenticated or not request.user.is_manager:
+        return redirect('dashboard')
+    products = Product.objects.all().order_by('product_name')
+    if request.method == 'POST':
+        form = StockUpdateForm(request.POST)
+        if form.is_valid():
+            product = form.cleaned_data['product']
+            quantity = form.cleaned_data['quantity']
+            product.stock = quantity
+            product.save()
+            messages.success(request, f"Stock updated for {product.product_name}.")
+            return redirect('manager_stock')
+    else:
+        form = StockUpdateForm()
+    context = {
+        'products': products,
+        'form': form,
+    }
+    return render(request, 'accounts/manager_stock.html', context)
+
+@login_required(login_url='login')
+def add_variation_types(request):
+    if not request.user.is_authenticated or not request.user.is_manager:
+        return redirect('dashboard')
+    if request.method == 'POST':
+        form = AddVariationTypesForm(request.POST)
+        if form.is_valid():
+            product = form.cleaned_data['product']
+            variation_type_names = form.cleaned_data['variation_type_names'].splitlines()
+            count = 0
+            for vt_name in variation_type_names:
+                vt_name = vt_name.strip()
+                if vt_name:
+                    VariationType.objects.create(product=product, name=vt_name)
+                    count += 1
+            messages.success(request, f'{count} variation types added to the product.')
+            return redirect('manager_variations')
+    else:
+        form = AddVariationTypesForm()
+    return render(request, 'accounts/add_variation_types.html', {'form': form})
+
+@login_required(login_url='login')
+def get_variation_types_for_product(request):
+    product_id = request.GET.get('product_id')
+    if product_id:
+        variation_types = VariationType.objects.filter(product_id=product_id)
+        data = [{'id': vt.id, 'name': vt.name} for vt in variation_types]
+    else:
+        data = []
+    return JsonResponse({'variation_types': data})
+
+@login_required(login_url='login')
+def remove_variation_types(request):
+    if not request.user.is_authenticated or not request.user.is_manager:
+        return redirect('dashboard')
+    product_id = request.POST.get('product') if request.method == 'POST' else None
+    form = RemoveVariationTypeForm(request.POST or None, product_id=product_id)
+    if request.method == 'POST' and 'remove_variation_type' in request.POST:
+        if form.is_valid():
+            variation_type = form.cleaned_data['variation_type']
+            Variation.objects.filter(variation_category=variation_type).delete()
+            variation_type.delete()
+            messages.success(request, 'Variation type and all associated variations have been deleted.')
+            return redirect('remove_variation_types')
+    return render(request, 'accounts/remove_variation_types.html', {'form': form})

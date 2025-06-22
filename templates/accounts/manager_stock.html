@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section-conten padding-y bg">
+    <div class="container">
+        <div class="row">
+            {% include 'includes/dashboard_sidebar.html' %}
+            <main class="col-md-9">
+                <article class="card">
+                    <header class="card-header">
+                        <strong>Stock Management</strong>
+                    </header>
+                    <div class="card-body">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            setTimeout(function() {
+                                var alerts = document.querySelectorAll('.alert-dismissible');
+                                alerts.forEach(function(alert) {
+                                    var bsAlert = new bootstrap.Alert(alert);
+                                    bsAlert.close();
+                                });
+                            }, 4000);
+                        });
+                        </script>
+                        <p>Here you can update the product quantities.</p>
+                        <form method="post" class="mb-4">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                            <button type="submit" class="btn btn-success">Update stock</button>
+                        </form>
+                        <h5>Products and current quantity</h5>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in products %}
+                                <tr{% if product.stock == 0 %} style="color: red;"{% endif %}>
+                                    <td>{{ product.product_name }}</td>
+                                    <td>{{ product.category.category_name }}</td>
+                                    <td>{{ product.price }}</td>
+                                    <td>{{ product.stock }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4">No products found.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}

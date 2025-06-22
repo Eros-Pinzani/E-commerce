@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section-conten padding-y bg">
+    <div class="container">
+        <div class="row">
+            {% include 'includes/dashboard_sidebar.html' %}
+            <main class="col-md-9">
+                <article class="card">
+                    <header class="card-header">
+                        <strong>Variation Management</strong>
+                    </header>
+                    <div class="card-body">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            setTimeout(function() {
+                                var alerts = document.querySelectorAll('.alert-dismissible');
+                                alerts.forEach(function(alert) {
+                                    var bsAlert = new bootstrap.Alert(alert);
+                                    bsAlert.close();
+                                });
+                            }, 4000);
+                        });
+                        </script>
+                        <form method="post" class="mb-4" id="variation-form">
+                            {% csrf_token %}
+                            {{ form.product.label_tag }} {{ form.product }}<br>
+                            {{ form.variation_category.label_tag }} {{ form.variation_category }}<br>
+                            {{ form.variation_value.label_tag }} {{ form.variation_value }}<br>
+                            <button type="submit" name="add_variation" class="btn btn-primary">Add single variation</button>
+                        </form>
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            var productSelect = document.getElementById('id_product');
+                            var variationCategorySelect = document.getElementById('id_variation_category');
+                            if(productSelect) {
+                                productSelect.addEventListener('change', function() {
+                                    var productId = this.value;
+                                    fetch("{% url 'get_variation_types_for_product' %}?product_id=" + productId)
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            // Svuota la select
+                                            variationCategorySelect.innerHTML = '';
+                                            if (data.variation_types.length === 0) {
+                                                var option = document.createElement('option');
+                                                option.value = '';
+                                                option.text = '---------';
+                                                variationCategorySelect.appendChild(option);
+                                            } else {
+                                                data.variation_types.forEach(function(vt) {
+                                                    var option = document.createElement('option');
+                                                    option.value = vt.id;
+                                                    option.text = vt.name;
+                                                    variationCategorySelect.appendChild(option);
+                                                });
+                                            }
+                                        });
+                                });
+                            }
+                        });
+                        </script>
+                        <h5>Existing variations</h5>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Variation type</th>
+                                    <th>Value</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for variation in variations %}
+                                <tr>
+                                    <td>{{ variation.product.product_name }}</td>
+                                    <td>{{ variation.variation_category.name }}</td>
+                                    <td>{{ variation.variation_value }}</td>
+                                    <td>
+                                        <form method="post" style="display:inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="variation_id" value="{{ variation.id }}">
+                                            <button type="submit" name="delete_variation" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this variation?');">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4">No variation present.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section-conten padding-y bg">
+    <div class="container">
+        <div class="row">
+            {% include 'includes/dashboard_sidebar.html' %}
+            <main class="col-md-9">
+                <article class="card">
+                    <header class="card-header">
+                        <strong>Remove variation types</strong>
+                    </header>
+                    <div class="card-body">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            setTimeout(function() {
+                                var alerts = document.querySelectorAll('.alert-dismissible');
+                                alerts.forEach(function(alert) {
+                                    var bsAlert = new bootstrap.Alert(alert);
+                                    bsAlert.close();
+                                });
+                            }, 4000);
+                        });
+                        </script>
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form.product.label_tag }} {{ form.product }}<br>
+                            {{ form.variation_type.label_tag }} {{ form.variation_type }}<br>
+                            <button type="submit" name="remove_variation_type" class="btn btn-danger mt-3">Delete</button>
+                        </form>
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            var productSelect = document.getElementById('id_product');
+                            var variationTypeSelect = document.getElementById('id_variation_type');
+                            if(productSelect) {
+                                productSelect.addEventListener('change', function() {
+                                    var form = this.form;
+                                    form.submit();
+                                });
+                            }
+                        });
+                        </script>
+                    </div>
+                </article>
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}

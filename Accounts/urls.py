@@ -17,4 +17,12 @@ urlpatterns = [
     path('edit_profile/', views.edit_profile, name='edit_profile'),
     path('change_password/', views.change_password, name='change_password'),
     path('order_detail/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('manager_dashboard/', views.manager_dashboard, name='manager_dashboard'),
+    path('manager_categories/', views.manager_categories, name='manager_categories'),
+    path('manager_products/', views.manager_products, name='manager_products'),
+    path('manager_variations/', views.manager_variations, name='manager_variations'),
+    path('manager_stock/', views.manager_stock, name='manager_stock'),
+    path('add_variation_types/', views.add_variation_types, name='add_variation_types'),
+    path('get_variation_types_for_product/', views.get_variation_types_for_product, name='get_variation_types_for_product'),
+    path('remove_variation_types/', views.remove_variation_types, name='remove_variation_types'),
 ]
