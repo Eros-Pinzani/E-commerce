@@ -6,6 +6,7 @@ from Category.models import Category
 from Carts.models import CartItem
 from Carts.views import _cart_id
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.views.generic import ListView
 
 
 # Create your views here.
@@ -49,14 +50,20 @@ def product_detail(request, category_slug, product_slug):
     return render(request, 'store/product_detail.html', context)
 
 
-def search(request):
-    if 'keyword' in request.GET:
-        keyword = request.GET['keyword']
+class ProductSearchListView(ListView):
+    model = Product
+    template_name = 'store/store.html'
+    context_object_name = 'products'
+    paginate_by = 6
+
+    def get_queryset(self):
+        queryset = Product.objects.all().filter(is_available=True)
+        keyword = self.request.GET.get('keyword')
         if keyword:
-            products = Product.objects.order_by('-created_date').filter(Q(description__icontains=keyword) | Q(product_name__icontains=keyword))
-            product_count = products.count()
-    context = {
-        'products': products,
-        'product_count': product_count,
-    }
-    return render(request, 'store/store.html', context)
+            queryset = queryset.filter(Q(description__icontains=keyword) | Q(product_name__icontains=keyword)).order_by('-created_date')
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['product_count'] = self.get_queryset().count()
+        return context
