@@ -399,9 +399,9 @@ def manager_stock(request):
         if form.is_valid():
             product = form.cleaned_data['product']
             quantity = form.cleaned_data['quantity']
-            product.stock = quantity
+            product.stock += quantity
             product.save()
-            messages.success(request, f"Stock updated for {product.product_name}.")
+            messages.success(request, f"Stock updated for {product.product_name} (+{quantity}).")
             return redirect('manager_stock')
     else:
         form = StockUpdateForm()

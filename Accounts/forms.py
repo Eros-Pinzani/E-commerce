@@ -116,7 +116,7 @@ class VariationForm(forms.ModelForm):
 
 class StockUpdateForm(forms.Form):
     product = forms.ModelChoiceField(queryset=Product.objects.all(), label="Product", widget=forms.Select(attrs={'class': 'form-control'}))
-    quantity = forms.IntegerField(label="New quantity", min_value=0, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Quantity'}))
+    quantity = forms.IntegerField(label="Quantity to add", min_value=1, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Quantity to add'}))
 
 class AddVariationTypesForm(forms.Form):
     product = forms.ModelChoiceField(queryset=Product.objects.all(), label="Product", widget=forms.Select(attrs={'class': 'form-control'}))
