@@ -35,9 +35,11 @@
                                                      alt="User Profile Picture" width="50" height="50"
                                                      style="border-radius:50%">
                                             {% else %}
-                                                <img src="/media/default/default-user.png"
-                                                     alt="Default User Picture" width="50" height="50"
-                                                     style="border-radius:50%">
+                                                <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:50%; background:#e0e0e0;">
+                                                    <circle cx="25" cy="25" r="25" fill="#e0e0e0"/>
+                                                    <circle cx="25" cy="20" r="10" fill="#bdbdbd"/>
+                                                    <ellipse cx="25" cy="38" rx="14" ry="8" fill="#bdbdbd"/>
+                                                </svg>
                                             {% endif %}
                                             <p class="mb-0">{{ user.email }}</p>
                                             <p>{{ user.phone_number }}</p>
