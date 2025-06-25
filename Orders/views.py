@@ -1,4 +1,3 @@
-from itertools import product
 from django.shortcuts import redirect, render
 from Carts.models import CartItem
 from Store.models import Product

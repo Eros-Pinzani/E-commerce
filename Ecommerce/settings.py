@@ -81,6 +81,7 @@ AUTH_USER_MODEL = 'Accounts.Account'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# This is the configuration for PostgreSQL database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -91,6 +92,14 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
+# This is the configuration for Sqlite3 database
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 
 # Password validation

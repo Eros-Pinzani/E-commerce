@@ -17,5 +17,12 @@
       <jdbc-url>jdbc:sqlite:C:\Users\erosp\Repo\Ecommerce\db.sqlite3</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="Tempio_di_Grotalek@localhost" uuid="924c1250-d36b-4579-9fe1-65cda8a8bcdb">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5432/Tempio_di_Grotalek</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

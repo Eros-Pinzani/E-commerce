@@ -1,20 +1,16 @@
 from django.db.models import Q
-from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from .models import Product
 from Category.models import Category
 from Carts.models import CartItem
 from Carts.views import _cart_id
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.core.paginator import Paginator
 from django.views.generic import ListView
 
 
 # Create your views here.
 
 def store(request, category_slug=None):
-    categories = None
-    products = None
-
     if category_slug is not None:
         categories = get_object_or_404(Category, slug=category_slug)
         products = Product.objects.filter(category=categories, is_available=True)
