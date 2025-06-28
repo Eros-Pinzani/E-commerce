@@ -27,4 +27,10 @@ urlpatterns = [
     path('cart/', include('Carts.urls')),
     path('accounts/', include('Accounts.urls')),
     path('orders/', include('Orders.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+# Aggiungi percorsi per i file media solo in ambiente di sviluppo
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+# In produzione, WhiteNoise gestirà i file statici e S3 i file media
