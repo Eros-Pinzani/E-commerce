@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 username = "admin"
-email = "eros.pinzani@edu.unifi.it"
+email = "erospinzani@gmail.com"
 password = "190568Ab@"
 first_name = "Eros"
 last_name = "Pinzani"
