@@ -29,7 +29,6 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-c!rqy!5z=^u*9aslg(x$i
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ['1', 'true', 'yes']
-print('DEBUG:', DEBUG)
 
 ALLOWED_HOSTS = ['*']  # Sostituisci con il tuo dominio in produzione
 
@@ -155,10 +154,8 @@ CLOUDINARY_STORAGE = {
 
 # Forza Cloudinary come storage predefinito per i media SEMPRE in produzione
 if not DEBUG:
-    print('Cloudinary attivo come storage media!')
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 else:
-    print('Storage media locale!')
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
 
