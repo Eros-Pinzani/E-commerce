@@ -152,11 +152,8 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', ''),
 }
 
-# Configurazione media files con Cloudinary
-USE_CLOUDINARY = os.environ.get('USE_CLOUDINARY', 'False') == 'True'
-
-if USE_CLOUDINARY:
-    # Impostazioni Cloudinary
+# Forza Cloudinary come storage predefinito per i media SEMPRE in produzione
+if not DEBUG:
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     MEDIA_URL = '/media/'  # Cloudinary gestirà l'URL reale
 else:
