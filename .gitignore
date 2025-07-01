@@ -8,4 +8,5 @@ staticfiles/
 *.log
 local_settings.py
 .DS_Store
+data.json
 
