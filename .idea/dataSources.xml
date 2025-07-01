@@ -17,11 +17,11 @@
       <jdbc-url>jdbc:sqlite:C:\Users\erosp\Repo\Ecommerce\db.sqlite3</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="Tempio_di_Grotalek@localhost" uuid="924c1250-d36b-4579-9fe1-65cda8a8bcdb">
+    <data-source source="LOCAL" name="railway@yamabiko.proxy.rlwy.net" uuid="82b2f787-87f3-441b-9916-4f98cf1aeaf2">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://localhost:5432/Tempio_di_Grotalek</jdbc-url>
+      <jdbc-url>jdbc:postgresql://yamabiko.proxy.rlwy.net:42163/railway</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
