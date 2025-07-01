@@ -29,11 +29,51 @@
                         });
                         </script>
                         <p>Here you can add or remove categories.</p>
-                        <form method="post" class="mb-4">
+                        <form method="post" class="mb-4" id="add-category-form">
                             {% csrf_token %}
                             {{ form.as_p }}
                             <button type="submit" name="add_category" class="btn btn-success">Add category</button>
+                            <button type="button" id="show-modify-category" class="btn btn-primary ms-2">Modify category</button>
                         </form>
+                        <div id="modify-category-section" style="display:none;">
+                            <form method="post" id="modify-category-form">
+                                {% csrf_token %}
+                                <div class="mb-2">
+                                    <label for="modify-category-select">Select category to modify:</label>
+                                    <select class="form-control" id="modify-category-select" name="modify_category_id" required>
+                                        <option value="">---------</option>
+                                        {% for category in categories %}
+                                            <option value="{{ category.id }}">{{ category.category_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label for="modify-category-name">New category name:</label>
+                                    <input type="text" class="form-control" id="modify-category-name" name="modify_category_name" required>
+                                </div>
+                                <button type="submit" name="save_modify_category" class="btn btn-primary">Save changes</button>
+                            </form>
+                        </div>
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            var showModifyBtn = document.getElementById('show-modify-category');
+                            var modifySection = document.getElementById('modify-category-section');
+                            var modifySelect = document.getElementById('modify-category-select');
+                            var modifyName = document.getElementById('modify-category-name');
+                            if(showModifyBtn) {
+                                showModifyBtn.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    modifySection.style.display = modifySection.style.display === 'none' ? '' : 'none';
+                                });
+                            }
+                            if(modifySelect && modifyName) {
+                                modifySelect.addEventListener('change', function() {
+                                    var selected = this.options[this.selectedIndex];
+                                    modifyName.value = selected.text !== '---------' ? selected.text : '';
+                                });
+                            }
+                        });
+                        </script>
                         <h5>Existing categories</h5>
                         <table class="table table-bordered">
                             <thead>

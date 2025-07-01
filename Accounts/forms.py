@@ -1,7 +1,7 @@
 from django import forms
+
+from Store.models import Product, VariationType
 from .models import Account, UserProfile
-from Category.models import Category
-from Store.models import Product, Variation, VariationType
 
 
 class RegistrationForm(forms.ModelForm):
@@ -58,65 +58,10 @@ class UserProfileForm(forms.ModelForm):
         for field in self.fields:
             self.fields[field].widget.attrs['class'] = 'form-control'
 
-class CategoryForm(forms.ModelForm):
-    class Meta:
-        model = Category
-        fields = ['category_name']  # Rimuovo lo slug dal form
-        labels = {
-            'category_name': 'Category Name',
-        }
-        widgets = {
-            'category_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Category Name'}),
-        }
-
-class ProductForm(forms.ModelForm):
-    class Meta:
-        model = Product
-        fields = ['product_name', 'description', 'price', 'images', 'stock', 'category']
-        labels = {
-            'product_name': 'Product Name',
-            'description': 'Description',
-            'price': 'Price',
-            'images': 'Images',
-            'stock': 'Stock',
-            'category': 'Category',
-        }
-        widgets = {
-            'product_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Product Name'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Description'}),
-            'price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Price'}),
-            'images': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'stock': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Stock'}),
-            'category': forms.Select(attrs={'class': 'form-control'}),
-        }
-
-class VariationForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        product_id = kwargs.pop('product_id', None)
-        super().__init__(*args, **kwargs)
-        if product_id:
-            self.fields['variation_category'].queryset = VariationType.objects.filter(product_id=product_id)
-        else:
-            self.fields['variation_category'].queryset = VariationType.objects.none()
-    class Meta:
-        model = Variation
-        fields = ['product', 'variation_category', 'variation_value', 'is_active']
-        labels = {
-            'product': 'Product',
-            'variation_category': 'Variation Type',
-            'variation_value': 'Value',
-            'is_active': 'Active',
-        }
-        widgets = {
-            'product': forms.Select(attrs={'class': 'form-control'}),
-            'variation_category': forms.Select(attrs={'class': 'form-control'}),
-            'variation_value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Value'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
-
 class StockUpdateForm(forms.Form):
     product = forms.ModelChoiceField(queryset=Product.objects.all(), label="Product", widget=forms.Select(attrs={'class': 'form-control'}))
     quantity = forms.IntegerField(label="Quantity to add", min_value=1, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Quantity to add'}))
+
 
 class AddVariationTypesForm(forms.Form):
     product = forms.ModelChoiceField(queryset=Product.objects.all(), label="Product", widget=forms.Select(attrs={'class': 'form-control'}))

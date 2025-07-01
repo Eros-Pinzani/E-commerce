@@ -1,11 +1,16 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
+from django.urls import reverse
+from django.forms import modelform_factory
+from django.views.decorators.http import require_GET
 
 from Carts.models import Cart, CartItem
 from Category.models import Category
 from Orders.models import Order, OrderProduct
-from .forms import RegistrationForm, UserForm, UserProfileForm, CategoryForm, ProductForm, VariationForm, StockUpdateForm, AddVariationTypesForm, RemoveVariationTypeForm
+from Category.forms import CategoryForm
+from Store.forms import ProductForm, VariationForm
+from Accounts.forms import StockUpdateForm
 from Store.models import Product, Variation, VariationType
 from django.utils.text import slugify
 from .models import Account, UserProfile
@@ -19,6 +24,7 @@ from django.core.mail import EmailMessage
 from Carts.views import _cart_id
 import requests
 from django.db import IntegrityError
+from .forms import RegistrationForm, UserForm, UserProfileForm
 
 
 # Create your views here.
@@ -310,6 +316,16 @@ def manager_categories(request):
             category.delete()
             messages.success(request, 'Category and all related products have been deleted.')
             return redirect('manager_categories')
+        elif 'save_modify_category' in request.POST:
+            cat_id = request.POST.get('modify_category_id')
+            new_name = request.POST.get('modify_category_name')
+            if cat_id and new_name:
+                category = get_object_or_404(Category, id=cat_id)
+                category.category_name = new_name
+                category.slug = slugify(new_name)
+                category.save()
+                messages.success(request, 'Category updated successfully.')
+                return redirect('manager_categories')
     else:
         form = CategoryForm()
     context = {
@@ -324,10 +340,8 @@ def manager_products(request):
         return redirect('dashboard')
     products = Product.objects.all().order_by('product_name')
     if request.method == 'POST':
-        if 'add_product' in request.POST:
+        if 'add_product' in request.POST or 'add_product_and_variations' in request.POST:
             form = ProductForm(request.POST, request.FILES)
-            variation_type_names_raw = request.POST.get('variation_type_names', '')
-            variation_type_names = variation_type_names_raw.splitlines()
             if form.is_valid():
                 product = form.save(commit=False)
                 base_slug = slugify(product.product_name)
@@ -340,10 +354,9 @@ def manager_products(request):
                         break
                     except IntegrityError:
                         counter += 1
-                for vt_name in variation_type_names:
-                    if vt_name.strip():
-                        VariationType.objects.create(product=product, name=vt_name.strip())
-                messages.success(request, 'Product and variation types added successfully.')
+                messages.success(request, 'Product added successfully.')
+                if 'add_product_and_variations' in request.POST:
+                    return redirect(reverse('manager_variations') + f'?product_id={product.id}')
                 return redirect('manager_products')
         elif 'delete_product' in request.POST:
             form = ProductForm()
@@ -366,25 +379,100 @@ def manager_products(request):
 def manager_variations(request):
     if not request.user.is_authenticated or not request.user.is_manager:
         return redirect('dashboard')
-    variations = Variation.objects.select_related('product', 'variation_category').all().order_by('product__product_name')
+    products = Product.objects.all().order_by('product_name')
+    variation_types = VariationType.objects.all().select_related('product')
+    variation_values = Variation.objects.all().select_related('variation_category', 'product')
+    form = VariationForm()
+
     if request.method == 'POST':
-        product_id = request.POST.get('product')
-        form = VariationForm(request.POST, product_id=product_id)
-        if 'add_variation' in request.POST and form.is_valid():
-            form.save()
-            messages.success(request, 'Variation added successfully.')
-            return redirect('manager_variations')
-        elif 'delete_variation' in request.POST:
-            variation_id = request.POST.get('variation_id')
-            variation = Variation.objects.get(id=variation_id)
-            variation.delete()
-            messages.success(request, 'Variation deleted successfully.')
-            return redirect('manager_variations')
-    else:
-        form = VariationForm()
+
+        if request.POST.get('variation_name') and request.POST.get('product_id'):
+            # Aggiunta nuova variation type e valori
+            product_id = request.POST.get('product_id')
+            variation_name = request.POST.get('variation_name')
+            values_str = request.POST.get('variation_values', '')
+            values = [v.strip() for v in values_str.split(',') if v.strip()]
+            # Se l'utente ha scritto un valore ma non ha cliccato su "Aggiungi", aggiungilo ora
+            value_input = request.POST.get('variation_value_input', '').strip()
+            if value_input:
+                values.append(value_input)
+            try:
+                product = Product.objects.get(id=product_id)
+                # Controllo unicità nome variazione per prodotto
+                if VariationType.objects.filter(product=product, name__iexact=variation_name).exists():
+                    messages.error(request, 'A variation with this name already exists for this product.')
+                else:
+                    vtype = VariationType.objects.create(product=product, name=variation_name)
+                    for val in values:
+                        Variation.objects.create(product=product, variation_category=vtype, variation_value=val)
+                    messages.success(request, 'Variation and values added successfully.')
+                    return redirect('manager_variations')
+            except Product.DoesNotExist:
+                messages.error(request, 'Product not found.')
+
+            return render(request, 'accounts/manager_variations.html')
+        elif 'delete_variation_value_id' in request.POST:
+            value_id = request.POST.get('delete_variation_value_id')
+            try:
+                value = Variation.objects.get(id=value_id)
+                value.delete()
+                messages.success(request, 'Variation value deleted successfully.')
+                return redirect('manager_variations')
+            except Variation.DoesNotExist:
+                messages.error(request, 'Variation value not found.')
+        elif 'delete_variation_type_id' in request.POST:
+            type_id = request.POST.get('delete_variation_type_id')
+            try:
+                vtype = VariationType.objects.get(id=type_id)
+                Variation.objects.filter(variation_category=vtype).delete()
+                vtype.delete()
+                messages.success(request, 'Variation type and all its values deleted successfully.')
+                return redirect('manager_variations')
+            except VariationType.DoesNotExist:
+                messages.error(request, 'Variation type not found.')
+        # --- GESTIONE MODIFICA VARIAZIONE ---
+        elif request.POST.get('modify_variation_type_id') and request.POST.get('modify_variation_name'):
+            type_id = request.POST.get('modify_variation_type_id')
+            new_name = request.POST.get('modify_variation_name')
+            values_json = request.POST.get('modify_variation_values')
+            import json
+            try:
+                data = json.loads(values_json)
+                # Filtra i valori vuoti
+                new_values = [v for v in data.get('values', []) if v.strip()]
+                value_ids = data.get('ids', [])
+            except Exception as e:
+                new_values = []
+                value_ids = []
+            try:
+                vtype = VariationType.objects.get(id=type_id)
+                vtype.name = new_name
+                vtype.save()
+                # Aggiorna valori esistenti e aggiungi nuovi
+                for idx, val in enumerate(new_values):
+                    val_id = value_ids[idx] if idx < len(value_ids) else None
+                    if val_id and str(val_id).isdigit():
+                        try:
+                            v = Variation.objects.get(id=val_id, variation_category=vtype)
+                            v.variation_value = val
+                            v.save()
+                        except Variation.DoesNotExist:
+                            pass
+                    else:
+                        # Nuovo valore (id None, null, vuoto, non numerico)
+                        if not Variation.objects.filter(product=vtype.product, variation_category=vtype, variation_value=val).exists():
+                            v=Variation.objects.create(product=vtype.product, variation_category=vtype, variation_value=val)
+                            v.save()
+
+                return redirect('manager_variations')
+            except VariationType.DoesNotExist:
+                messages.error(request, 'Variation type not found.')
     context = {
-        'variations': variations,
         'form': form,
+        'products': products,
+        'variation_types': variation_types,
+        'variation_values': variation_values,
+        'selected_product_id': None,
     }
     return render(request, 'accounts/manager_variations.html', context)
 
@@ -411,47 +499,120 @@ def manager_stock(request):
     return render(request, 'accounts/manager_stock.html', context)
 
 @login_required(login_url='login')
-def add_variation_types(request):
+def product_edit(request, product_id):
     if not request.user.is_authenticated or not request.user.is_manager:
         return redirect('dashboard')
+    product = get_object_or_404(Product, id=product_id)
+    variation_types = VariationType.objects.filter(product=product)
     if request.method == 'POST':
-        form = AddVariationTypesForm(request.POST)
-        if form.is_valid():
-            product = form.cleaned_data['product']
-            variation_type_names = form.cleaned_data['variation_type_names'].splitlines()
-            count = 0
-            for vt_name in variation_type_names:
-                vt_name = vt_name.strip()
-                if vt_name:
-                    VariationType.objects.create(product=product, name=vt_name)
-                    count += 1
-            messages.success(request, f'{count} variation types added to the product.')
-            return redirect('manager_variations')
+        form = None
+        # Modifica prodotto
+        if 'modify_product' in request.POST:
+            form = ProductForm(request.POST, request.FILES, instance=product)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Product updated successfully.')
+                return redirect('manager_products')
+        # Modifica nome variation type
+        elif 'edit_variation_type' in request.POST:
+            vt_id = request.POST.get('variation_type_id')
+            new_name = request.POST.get('variation_type_name')
+            vt = get_object_or_404(VariationType, id=vt_id, product=product)
+            vt.name = new_name
+            vt.save()
+            messages.success(request, 'Variation type updated successfully.')
+            return redirect('product_edit', product_id=product.id)
+        # Elimina variation type
+        elif 'delete_variation_type' in request.POST:
+            vt_id = request.POST.get('variation_type_id')
+            vt = get_object_or_404(VariationType, id=vt_id, product=product)
+            vt.delete()
+            messages.success(request, 'Variation type deleted successfully.')
+            return redirect('product_edit', product_id=product.id)
+        # Se non è nessuno dei precedenti, oppure il form non è valido, assicura che form sia valorizzato
+        if form is None:
+            form = ProductForm(instance=product)
     else:
-        form = AddVariationTypesForm()
-    return render(request, 'accounts/add_variation_types.html', {'form': form})
+        form = ProductForm(instance=product)
+    context = {
+        'form': form,
+        'product': product,
+        'edit_mode': True,
+        'variation_types': variation_types,
+    }
+    return render(request, 'accounts/product_edit.html', context)
 
+@login_required(login_url='login')
+def variation_list(request):
+    if not request.user.is_authenticated or not request.user.is_manager:
+        return redirect('dashboard')
+    variations = Variation.objects.select_related('product', 'variation_category').all().order_by('product__product_name')
+    context = {
+        'variations': variations,
+    }
+    return render(request, 'accounts/variation_list.html', context)
+
+@login_required(login_url='login')
+def variation_create(request):
+    if not request.user.is_authenticated or not request.user.is_manager:
+        return redirect('dashboard')
+    VariationFormDynamic = modelform_factory(Variation, exclude=[])
+    if request.method == 'POST':
+        form = VariationFormDynamic(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Variazione creata con successo.')
+            return redirect('variation_list')
+    else:
+        form = VariationFormDynamic()
+    context = {
+        'form': form,
+    }
+    return render(request, 'accounts/variation_form.html', context)
+
+@login_required(login_url='login')
+def variation_edit(request, variation_id):
+    if not request.user.is_authenticated or not request.user.is_manager:
+        return redirect('dashboard')
+    variation = get_object_or_404(Variation, id=variation_id)
+    VariationFormDynamic = modelform_factory(Variation, exclude=[])
+    if request.method == 'POST':
+        form = VariationFormDynamic(request.POST, instance=variation)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Variazione aggiornata con successo.')
+            return redirect('variation_list')
+    else:
+        form = VariationFormDynamic(instance=variation)
+    context = {
+        'form': form,
+        'variation': variation,
+    }
+    return render(request, 'accounts/variation_form.html', context)
+
+@login_required(login_url='login')
+def variation_delete(request, variation_id):
+    if not request.user.is_authenticated or not request.user.is_manager:
+        return redirect('dashboard')
+    variation = get_object_or_404(Variation, id=variation_id)
+    if request.method == 'POST':
+        variation.delete()
+        messages.success(request, 'Variazione eliminata con successo.')
+        return redirect('variation_list')
+    context = {
+        'variation': variation,
+    }
+    return render(request, 'accounts/variation_confirm_delete.html', context)
+
+@require_GET
 @login_required(login_url='login')
 def get_variation_types_for_product(request):
     product_id = request.GET.get('product_id')
-    if product_id:
-        variation_types = VariationType.objects.filter(product_id=product_id)
-        data = [{'id': vt.id, 'name': vt.name} for vt in variation_types]
-    else:
-        data = []
+    if not product_id:
+        return JsonResponse({'error': 'Missing product_id'}, status=400)
+    variation_types = VariationType.objects.filter(product_id=product_id)
+    data = [
+        {'id': vt.id, 'name': vt.name}
+        for vt in variation_types
+    ]
     return JsonResponse({'variation_types': data})
-
-@login_required(login_url='login')
-def remove_variation_types(request):
-    if not request.user.is_authenticated or not request.user.is_manager:
-        return redirect('dashboard')
-    product_id = request.POST.get('product') if request.method == 'POST' else None
-    form = RemoveVariationTypeForm(request.POST or None, product_id=product_id)
-    if request.method == 'POST' and 'remove_variation_type' in request.POST:
-        if form.is_valid():
-            variation_type = form.cleaned_data['variation_type']
-            Variation.objects.filter(variation_category=variation_type).delete()
-            variation_type.delete()
-            messages.success(request, 'Variation type and all associated variations have been deleted.')
-            return redirect('remove_variation_types')
-    return render(request, 'accounts/remove_variation_types.html', {'form': form})

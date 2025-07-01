@@ -22,7 +22,6 @@ urlpatterns = [
     path('manager_products/', views.manager_products, name='manager_products'),
     path('manager_variations/', views.manager_variations, name='manager_variations'),
     path('manager_stock/', views.manager_stock, name='manager_stock'),
-    path('add_variation_types/', views.add_variation_types, name='add_variation_types'),
+    path('product_edit/<int:product_id>/', views.product_edit, name='product_edit'),
     path('get_variation_types_for_product/', views.get_variation_types_for_product, name='get_variation_types_for_product'),
-    path('remove_variation_types/', views.remove_variation_types, name='remove_variation_types'),
 ]

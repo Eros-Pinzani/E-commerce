@@ -7,7 +7,7 @@
             <main class="col-md-9">
                 <article class="card">
                     <header class="card-header">
-                        <strong>Remove variation types</strong>
+                        <strong>Modifica Prodotto</strong>
                     </header>
                     <div class="card-body">
                         {% if messages %}
@@ -28,24 +28,24 @@
                             }, 4000);
                         });
                         </script>
-                        <form method="post">
+                        <form method="post" enctype="multipart/form-data" class="mb-4" autocomplete="off">
                             {% csrf_token %}
-                            {{ form.product.label_tag }} {{ form.product }}<br>
-                            {{ form.variation_type.label_tag }} {{ form.variation_type }}<br>
-                            <button type="submit" name="remove_variation_type" class="btn btn-danger mt-3">Delete</button>
+                            <input type="hidden" name="modify_product" value="1">
+                            {% for field in form %}
+                                {% if field.name != 'images' and field.name != 'image' %}
+                                    {{ field.label_tag }} {{ field }}
+                                    {% for error in field.errors %}<div class="text-danger">{{ error }}</div>{% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                            <label for="id_images">Immagine prodotto:</label>
+                            <input type="file" name="images" id="id_images" class="form-control"/>
+                            {% if form.images.errors %}
+                                {% for error in form.images.errors %}<div class="text-danger">{{ error }}</div>{% endfor %}
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">Salva modifiche</button>
+                            <a href="{% url 'manager_products' %}" class="btn btn-secondary">Indietro</a>
                         </form>
-                        <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            var productSelect = document.getElementById('id_product');
-                            var variationTypeSelect = document.getElementById('id_variation_type');
-                            if(productSelect) {
-                                productSelect.addEventListener('change', function() {
-                                    var form = this.form;
-                                    form.submit();
-                                });
-                            }
-                        });
-                        </script>
+                        <hr>
                     </div>
                 </article>
             </main>
