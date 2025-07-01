@@ -1,17 +1,21 @@
+import os
 from django.db import models
 from django.urls import reverse
-from cloudinary.models import CloudinaryField
-
 from Category.models import Category
 
 # Create your models here.
+DB_LIVE = os.environ.get('DB_LIVE', 'False') == 'True'
 
 class Product(models.Model):
     product_name = models.CharField(max_length=200, unique=True)
     slug = models.SlugField(max_length=200, unique=True)
     description = models.TextField(max_length=500, blank=True)
     price = models.IntegerField()
-    images = CloudinaryField('image', folder='photos/products')
+    if DB_LIVE:
+        from cloudinary.models import CloudinaryField
+        images = CloudinaryField('image', folder='photos/products')
+    else:
+        images = models.ImageField(upload_to='products/', blank=True)
     stock = models.IntegerField()
     is_available = models.BooleanField(default=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
