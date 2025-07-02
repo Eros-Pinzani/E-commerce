@@ -501,6 +501,14 @@ p:last-child {
   padding-bottom: 20px;
 }
 
+footer.section-footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    z-index: 100;
+}
+
 /* ================== COMPONENTS =================== */
 /* ================ OWL SLIDER BANNER ================ */
 .slider-banner-owl .owl-nav .owl-prev, .slider-banner-owl .owl-nav .owl-next {
@@ -1268,7 +1276,7 @@ a[class*=card]:hover .title {
   max-width: 46px;
   font-weight: bold;
   flex-basis: 46px;
-  border-color: #a67c52;
+
   flex-grow: 0;
 }
 .input-spinner .btn {
@@ -1419,4 +1427,3 @@ a[class*=card]:hover .title {
     background-size: cover;
     background-repeat: repeat;
 }
-
