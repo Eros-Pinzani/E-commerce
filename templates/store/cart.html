@@ -65,7 +65,7 @@
                                                                 <input type="hidden" name="variation_{{ item.variation_category.id }}" value="{{ item.variation_value }}">
                                                             {% endfor %}
                                                             <button class="btn btn-light" type="submit"
-                                                                    id="button-minus"><i
+                                                                    id="button-minus" {% if cart_item.quantity >= cart_item.product.stock %}disabled{% endif %}><i
                                                                     class="fa fa-plus"></i></button>
                                                         </form>
                                                     </div>
