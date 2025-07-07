@@ -502,11 +502,35 @@ p:last-child {
 }
 
 footer.section-footer {
-    position: fixed;
-    left: 0;
-    bottom: 0;
+    position: static;
+    left: unset;
+    bottom: unset;
     width: 100%;
     z-index: 100;
+    flex-shrink: 0;
+}
+
+header.section-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 101;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-top: 110px; /* spazio per l'header fisso, regola se necessario */
+}
+
+main {
+    flex: 1 0 auto;
 }
 
 /* ================== COMPONENTS =================== */
