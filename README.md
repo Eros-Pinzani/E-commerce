@@ -47,6 +47,9 @@ allows fast and secure uploads of event images.
 
 ---
 
-## Pre-populated database
+# Disclaimer
 
-A pre-populated sqlite3 database (db.sqlite3) is included in the project repository. This allows to run the application locally with demo data already available, so you can immediately test all the main features without having to create products or categories.
+## Project files
+
+To view and download the source files with populated database and the necessary resources go to this [realease](https://github.com/Eros-Pinzani/E-commerce/releases/tag/local-website).
+> [Tempio di Grotalek - source files](https://github.com/Eros-Pinzani/E-commerce/releases/tag/local-website)
