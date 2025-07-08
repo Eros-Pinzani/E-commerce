@@ -51,5 +51,5 @@ allows fast and secure uploads of event images.
 
 ## Project files
 
-To view and download the source files with populated database and the necessary resources go to this [realease](https://github.com/Eros-Pinzani/E-commerce/releases/tag/local-website).
-> [Tempio di Grotalek - source files](https://github.com/Eros-Pinzani/E-commerce/releases/tag/local-website)
+To view and download the source files with populated database and the necessary resources go to this [realease](https://github.com/Eros-Pinzani/E-commerce/releases/tag/localFiles).
+> [Tempio di Grotalek - source files](https://github.com/Eros-Pinzani/E-commerce/releases/tag/localFiles)
